@@ -25,20 +25,52 @@ const App = () => {
     name: "",
     room: "vacad",
   });
+
   const classes = useStyles();
-  React.useEffect(() => {
-    const client = new W3CWebSocket(
-      "ws://127.0.0.1:8001/ws/chat/" + state.room + "/"
+
+  const onButtonClicked = (e) => {
+    e.preventDefault();
+    client.send(
+      JSON.stringify({
+        name: state.name,
+        room: state.room,
+        message: state.value,
+      })
     );
-    setClient(client);
-    client.onopen = () => {
-      console.log("connected");
-    };
-    client.onmessage = (e) => {
-      console.log(e.data);
-      // setMessages([...messages, e.data]);
-    };
-  }, []);
+    setState({ ...state, value: "" });
+  };
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+    setState({ ...state, isLoggedIn: true });
+    setClient(
+      new W3CWebSocket("ws://127.0.0.1:8001/ws/chat/" + state.room + "/")
+    );
+  };
+
+  React.useEffect(() => {
+    if (client) {
+      client.onopen = () => {
+        console.log("connected");
+      };
+      client.onmessage = (e) => {
+        console.log(e.data);
+        const data = JSON.parse(e.data);
+        if (data) {
+          setState((s) => ({
+            ...s,
+            messages: [
+              ...s.messages,
+              {
+                msg: data.message,
+                name: data.name,
+              },
+            ],
+          }));
+        }
+      };
+    }
+  }, [client]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -56,27 +88,43 @@ const App = () => {
             {state.messages.map((message, index) => (
               <Card>
                 <CardHeader
-                  avatar={<Avatar className={classes.avatar}>R</Avatar>}
+                  avatar={
+                    <Avatar className={classes.avatar}>
+                      {message.name[0]}
+                    </Avatar>
+                  }
                   title={message.name}
-                  subheader={message.time}
+                  subheader={message.msg}
+                  // {message.time}
                 />
-                <Typography variant="body2" color="textSecondary" component="p">
-                  {message.message}
-                </Typography>
               </Card>
             ))}
           </Paper>
+          <form className={classes.form} noValidate onSubmit={onButtonClicked}>
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              autoFocus
+              id="outlined-helperText"
+              label="Message"
+              value={state.value}
+              onChange={(e) => {
+                setState({
+                  ...state,
+                  value: e.target.value,
+                });
+              }}
+            />
+          </form>
         </div>
       ) : (
         <>
           <CssBaseline />
           <div className={classes.paper}>
             <Typography>ChattyRooms</Typography>
-            <form
-              className={classes.form}
-              noValidate
-              onSubmit={(value) => setState({ ...state, isLoggedIn: true })}
-            >
+            <form className={classes.form} Validate onSubmit={onFormSubmit}>
               <TextField
                 variant="outlined"
                 margin="normal"
@@ -87,9 +135,7 @@ const App = () => {
                 name="Chatroom Name"
                 type="text"
                 value={state.room}
-                // InputLabelProps={{
-                //   shrink: true,
-                // }}
+                autoFocus
                 onChange={(e) => {
                   setState({ ...state, room: e.target.value });
                 }}
@@ -104,9 +150,6 @@ const App = () => {
                 type="text"
                 id="Username"
                 value={state.name}
-                // InputLabelProps={{
-                //   shrink: true,
-                // }}
                 onChange={(e) => {
                   setState({ ...state, name: e.target.value });
                 }}
