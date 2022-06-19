@@ -1,5 +1,3 @@
-from cgitb import text
-from email import message
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
