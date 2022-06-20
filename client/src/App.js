@@ -1,5 +1,5 @@
 import "./App.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import Button from "@material-ui/core/Button";
 import Container from "@material-ui/core/Container";
@@ -26,10 +26,13 @@ const App = () => {
     room: "vacad",
   });
 
+  const scrollRef = useRef(null);
+
   const classes = useStyles();
 
   const onButtonClicked = (e) => {
     e.preventDefault();
+    if (state.value.trim() === "") return;
     client.send(
       JSON.stringify({
         name: state.name,
@@ -53,10 +56,9 @@ const App = () => {
   useEffect(() => {
     if (client) {
       client.onopen = () => {
-        console.log("connected");
+        console.log("WebSocket connected");
       };
       client.onmessage = (e) => {
-        console.log(e.data);
         const data = JSON.parse(e.data);
         if (data) {
           setState((s) => ({
@@ -74,6 +76,12 @@ const App = () => {
     }
   }, [client]);
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behaviour: "smooth" });
+    }
+  }, [state.messages]);
+
   return (
     <Container component="main" maxWidth="xs">
       {state.isLoggedIn ? (
@@ -88,7 +96,7 @@ const App = () => {
             }}
           >
             {state.messages.map((message, index) => (
-              <Card>
+              <Card ref={scrollRef}>
                 <CardHeader
                   avatar={
                     <Avatar className={classes.avatar}>
@@ -126,7 +134,7 @@ const App = () => {
           <CssBaseline />
           <div className={classes.paper}>
             <Typography>ChattyRooms</Typography>
-            <form className={classes.form} Validate onSubmit={onFormSubmit}>
+            <form className={classes.form} onSubmit={onFormSubmit}>
               <TextField
                 variant="outlined"
                 margin="normal"
