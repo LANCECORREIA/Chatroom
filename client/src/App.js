@@ -1,5 +1,5 @@
 import "./App.css";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 import Button from "@material-ui/core/Button";
 import Container from "@material-ui/core/Container";
@@ -17,8 +17,8 @@ import {
 import useStyles from "./styles";
 
 const App = () => {
-  const [client, setClient] = React.useState(null);
-  const [state, setState] = React.useState({
+  const [client, setClient] = useState(null);
+  const [state, setState] = useState({
     isLoggedIn: false,
     messages: [],
     value: "",
@@ -44,11 +44,13 @@ const App = () => {
     e.preventDefault();
     setState({ ...state, isLoggedIn: true });
     setClient(
-      new W3CWebSocket("ws://127.0.0.1:8001/ws/chat/" + state.room + "/")
+      new W3CWebSocket(
+        "wss://personalchat-app.herokuapp.com/ws/chat/" + state.room + "/"
+      )
     );
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (client) {
       client.onopen = () => {
         console.log("connected");
@@ -163,18 +165,6 @@ const App = () => {
               >
                 Start Chatting
               </Button>
-              <Grid container>
-                <Grid item xs={12}>
-                  <Link href="#" variant="body2">
-                    Forgot Password?
-                  </Link>
-                </Grid>
-                <Grid item xs={12}>
-                  <Link href="#" variant="body2">
-                    Dont have an account? Sign Up
-                  </Link>
-                </Grid>
-              </Grid>
             </form>
           </div>
         </>
